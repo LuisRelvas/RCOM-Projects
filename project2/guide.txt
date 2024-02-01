@@ -1,0 +1,55 @@
+Cliente de acordo com o protocolo FTP (verificar RFC959 está no moodle) 
+
+Estrutura do codigo : 
+
+1) Verificar o input e extrair : 
+    1.1) O nome do servidor; 
+    1.2) O path para o ficheiro que pretendemos transferir 
+    1.3) O user e a sua pass
+
+2) Obter o endereco IP do servidor (gethostbyname)
+
+    //If the hostname is defined then retrieves his IP address
+    //The variable url->ip will be filled with the IP address
+    //If the hostname is not defined return -1
+    //If the hostname is defined return 0
+    if ((h = gethostbyname(url->host_name)) == NULL) {
+        herror("gethostbyname()");
+        exit(-1);
+    }
+    strcpy(url->ip,inet_ntoa(*((struct in_addr *) h->h_addr)));
+    //printf("%s\n",data->ip);
+    return 0;
+
+3) Utilizar a função createSocket TCP para a ligação com o servidor, fazendo uso do IP obtido no ponto 2: 
+
+    int createSocket(char* ip,int port) {
+        int sockfd;
+        struct sockaddr_in server_addr;
+        char buf[] = "Mensagem de teste na travessia da pilha TCP/IP\n";
+        size_t bytes;
+
+        /*server address handling*/
+        bzero((char *) &server_addr, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = inet_addr(ip);   
+        server_addr.sin_port = htons(port);        
+
+        /*open a TCP socket*/
+        if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            perror("socket()");
+            return -1;
+        }
+
+        /*connect to the server*/
+        if (connect(sockfd,(struct sockaddr *) &server_addr,sizeof(server_addr)) < 0) {
+            perror("connect()");
+            return -1;
+        }
+
+        return sockfd;
+    }
+
+4) Enviar os comandos necessarios de acordo com o protocolo FTP, para realizar a ação de auth e de transferencia do ficheiro pretendido;
+Interpretar as respostas do servidor e agir de acordo com as mesmas. 
+

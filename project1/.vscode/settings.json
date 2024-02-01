@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "fcntl.h": "c",
+        "unistd.h": "c",
+        "termios.h": "c",
+        "application_layer.h": "c",
+        "types.h": "c",
+        "math.h": "c",
+        "stdio.h": "c"
+    }
+}

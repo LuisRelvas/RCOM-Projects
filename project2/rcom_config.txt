@@ -1,0 +1,93 @@
+~ our steps to configure the network :)
+
+Desligar TODOS os cabos
+Ligar eth0 do Tux2, Tux3, Tux4 a qualquer porta da switch exceto a CONSOLE e a 1ª
+Ligar S0 do Tux2 ao RS232->Cisco e o Cisco->RS232 à console da switch
+Dar reset à configuração de ethernet em TODOS os computadores: systemctl restart networking
+
+Tux2:
+	ifconfig eth0 172.16.Y1.1/24 (ou ifconfig eth0 172.16.Y1.1 netmask 255.255.255.0)
+
+Tux3:
+	ifconfig eth0 172.16.Y0.1/24
+
+Tux4:
+	ifconfig eth0 172.16.Y0.254/24
+
+No Tux2, abrir o GTKterm com baudrate a 115200, carregar no ENTER e dar reset à configuração: 
+	/system reset-configuration
+User: admin
+Pass: (blank)
+
+Criar 2 bridges:
+	/interface bridge add name=bridgeY0
+	/interface bridge add name=bridgeY1
+
+Remover as ports ethernet onde os PCs estão ligados:
+	/interface bridge port remove [find interface=etherXX] (Tux2)
+	/interface bridge port remove [find interface=etherXX] (Tux3)
+	/interface bridge port remove [find interface=etherXX] (Tux4)
+
+Adicionar as ports ethernet às bridges criadas:
+	/interface bridge port add interface=etherXX bridge=bridgeY1 (Tux2)
+	/interface bridge port add interface=etherXX bridge=bridgeY0 (Tux3)
+	/interface bridge port add interface=etherXX bridge=bridgeY0 (Tux4)
+
+Verificar que as bridges foram criadas:
+	/interface bridge port print brief
+
+Em TODOS os PCs, desabilitar o ignore broadcasts:
+	echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+Ligar eth1 do Tux4 a qualquer porta da switch exceto a CONSOLE e a 1ª
+
+Configurar o ip na Tux4:
+	ifconfig eth1 172.16.Y1.253/24
+
+Adicionar Tux4 à bridge1:
+	/interface bridge port remove [find interface=etherXX] (Tux4)
+	/interface bridge port add interface=etherXX bridge=Y1 (Tux4)
+
+Habilitar IP forwarding no Tux4:
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+
+Adicionar routes no Tux2 e Tux3:
+	route add default gw 172.16.Y1.253 (Tux2)
+	route add default gw 172.16.Y0.254 (Tux3)
+
+Configurar um router comercial e implementar NAT:
+Desligar Cisco->RS232 da consola da switch e ligar ao MTIK do router
+
+Re-abrir o GTKterm com baudrate 115200
+
+Reset router config: 
+	/system reset-configuration
+
+Ligar a ether1 do Router ao PY.1
+
+Configurar IP address:
+	/ip address add address=172.16.2.Y9/24 interface=ether1
+
+Ligar ether2 do Router à switch e colocar essa porta na bridgeY1:
+	/interface bridge port remove [find interface=etherXX] (switch)
+	/interface bridge port add interface=etherXX bridge=Y1 (switch)
+	/ip address add address=172.16.Y1.254/24 interface=ether2 (router)
+
+Adicionar routes para 172.16.Y0.0/24 no Tux2:
+	ip route add 172.16.Y0.0/24 via 172.16.Y1.253
+
+Adicionar routes para 172.16.Y0.0/24 no Router:
+	/ip route add dst-address=0.0.0.0/0 gateway=172.16.2.254
+	/ip route add dst-address=172.16.Y0.0/24 gateway=172.16.Y1.253
+
+Configurar DNS no Tux2, Tux3, Tux4:
+	sudo nano /etc/resolv.conf
+	nameserver 172.16.2.1
+	
+	
+	
+gcc -Wall -o download download.c ./download {ftp url}
+
+ftp://ftp.up.pt/pub/kodi/timestamp.txt
+
+
